@@ -1,7 +1,7 @@
 {
-  "name": "qweb3",
-  "version": "1.0.0",
-  "description": "QuarkChain wrapper over Ethereum web3",
+  "name": "qq-web3",
+  "version": "2.5.0",
+  "description": "quark wrapper over eth web3",
   "main": "dist/index.js",
   "files": [
     "dist"
@@ -13,21 +13,13 @@
     "run:dist": "babel index.js quarkchain-ethereum-tx.js -d ./dist && ndb dist/index.js",
     "prepublishOnly": "npm run build:dist && npm run build"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/QuarkChain/quarkchain-web3.js.git"
-  },
   "keywords": [
     "quarkchain",
     "ethereum",
     "javascript"
   ],
-  "author": "quarkchain.org",
-  "license": "LGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/QuarkChain/quarkchain-web3.js/issues"
-  },
-  "homepage": "https://github.com/QuarkChain/quarkchain-web3.js#readme",
+  "author": "superman285",
+  "license": "Apache-2.0",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
@@ -35,6 +27,7 @@
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-0": "^6.24.1",
+    "copy-webpack-plugin": "4.5.3",
     "eslint": "^5.2.0",
     "eslint-config-airbnb-base": "^13.0.0",
     "eslint-plugin-import": "^2.13.0",
@@ -45,6 +38,7 @@
   "dependencies": {
     "ethereum-common": "0.0.18",
     "ethereumjs-util": "^5.2.0",
+    "ethjs-provider-http": "^0.1.6",
     "web3": "^0.20.3"
   }
 }

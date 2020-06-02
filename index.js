@@ -41,17 +41,17 @@ if (typeof window === 'undefined') {
     Web3 = require('web3')
   }else {
     if (window.Web3.version && !window.Web3.version.api) {
-      // 1.x web3
+      // window.Web3 version 1.x
       Web3 = require('web3');
     }else {
-      // 0.20.x web3
+      // window.Web3 version 0.20.x
       Web3 = window.Web3;
     }
   }
 }
-const path = require('path');
 
-const Web3HttpProvider = require(path.resolve(__dirname,'lib/web3-http-provider/web3-http-provider'))
+const Web3HttpProvider = require('./lib/web3-http-provider')
+//const Web3HttpProvider = require('ethjs-provider-http')
 
 const defaultTokenSetting = {
   transferTokenId: '0x8bb0',
@@ -147,20 +147,20 @@ async function metaMaskSignTyped(web3in, tx) {
     const params = [getTypedTx(tx), from];
     const method = 'eth_signTypedData';
     web3in.currentProvider.sendAsync(
-      {
-        method,
-        params,
-        from,
-      },
-      (err, result) => {
-        if (err) {
-          return reject(err);
-        }
-        if (result.error !== undefined) {
-          return reject(result.error);
-        }
-        return resolve(result.result);
-      },
+        {
+          method,
+          params,
+          from,
+        },
+        (err, result) => {
+          if (err) {
+            return reject(err);
+          }
+          if (result.error !== undefined) {
+            return reject(result.error);
+          }
+          return resolve(result.result);
+        },
     );
   });
 }
@@ -180,16 +180,16 @@ function loadContract(abi, contractAddress, web3in, web3http) {
   // Override call and sendTransaction to include full shard id
   web3contract.eth.call = (obj, blockId, callback) => {
     const ret = web3in.qkc.call(
-      Object.assign({}, obj, { to: contractAddress }),
-      callback,
+        Object.assign({}, obj, { to: contractAddress }),
+        callback,
     );
     return ret;
   };
 
   web3contract.eth.sendTransaction = async (obj, callback) => {
     const ret = await web3in.qkc.sendTransaction(
-      Object.assign({}, obj, { to: contractAddress }),
-      callback,
+        Object.assign({}, obj, { to: contractAddress }),
+        callback,
     );
     return ret;
   };
@@ -215,6 +215,7 @@ export default {
 
     let tmpWeb3in;
     if (web3in.version && !web3in.version.api) {
+      // web3in version 1.x
       tmpWeb3in = new Web3(web3in.currentProvider);
     } else {
       tmpWeb3in = web3in;
@@ -248,7 +249,7 @@ export default {
             throw new Error('Invalid key');
           }
           this.key = privateKey;
-          this.address = `0x${_ethereumjsUtil2.default.privateToAddress(_ethereumjsUtil2.default.toBuffer(privateKey)).toString('hex')}`;
+          this.address = `0x${ethUtil.privateToAddress(ethUtil.toBuffer(privateKey)).toString('hex')}`;
         },
 
         unsetPrivateKey() {
@@ -269,7 +270,7 @@ export default {
 
           const rawTx = Object.assign({}, defaultTokenSetting, obj);
           if (obj.to !== undefined) {
-            if (obj.to.length == 42) {
+            if (obj.to.length === 42) {
               rawTx.to = obj.to;
             } else {
               rawTx.to = getEthAddressFromQkcAddress(obj.to);
@@ -280,7 +281,12 @@ export default {
           }
 
           // FIXME: make this async
-          rawTx.nonce = web3http.eth.getTransactionCount(fromEthAddress, rawTx.fromFullShardKey);
+          if (rawTx.nonce == undefined) {
+            rawTx.nonce = web3http.eth.getTransactionCount(
+                fromEthAddress,
+                rawTx.fromFullShardKey,
+            );
+          }
           if (!rawTx.networkId) {
             // default network is devnet
             rawTx.networkId = '0xff';
@@ -291,14 +297,13 @@ export default {
           //    '0x1' typed encoding matching MetaMask initial implementation of EIP-712
           rawTx.version = '0x1';
 
-          const tx = new _quarkchainEthereumTx2.default(rawTx);
+          const tx = new Transaction(rawTx);
 
           if (this.key) {
             // sign with a key
             tx.version = '0x0';
-            tx.sign(_ethereumjsUtil2.default.toBuffer(this.key));
+            tx.sign(ethUtil.toBuffer(this.key));
           } else {
-            //****
             const sig = await metaMaskSignTyped(tmpWeb3in, tx);
             Object.assign(tx, decodeSignature(sig));
           }
@@ -320,7 +325,6 @@ export default {
         contract(abi) {
           const contractFactory = tmpWeb3in.eth.contract(abi);
           const originalFactory = tmpWeb3in.eth.contract(abi);
-          //****
           contractFactory.at = addr => loadContract(abi, addr, web3in, web3http);
           contractFactory.new = (...args) => {
             const size = args.length;
